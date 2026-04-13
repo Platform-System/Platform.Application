@@ -1,4 +1,4 @@
-﻿name: Platform.Application CI
+name: Platform.Application CI
 
 on:
   push:
@@ -8,4 +8,5 @@ jobs:
   build:
     uses: Platform-System/Platform.CI-CD/.github/workflows/dotnet-build-template.yml@main
     with:
-      project_path: 'Platform.Application/Platform.Application.csproj'
+      project_path: '.csproj'
+
