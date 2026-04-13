@@ -6,8 +6,26 @@ on:
 
 jobs:
   build:
-    uses: Platform-System/Platform.CI-CD/.github/workflows/dotnet-build-template.yml@main
-    with:
-      project_path: 'Platform.Application.csproj'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Application
+        uses: actions/checkout@v4
+        with:
+          path: Platform.Application
 
+      - name: Checkout Domain (Dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: Platform-System/Platform.Domain
+          path: Platform.Domain
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore Platform.Application/Platform.Application.csproj
+
+      - name: Build
+        run: dotnet build Platform.Application/Platform.Application.csproj --no-restore
