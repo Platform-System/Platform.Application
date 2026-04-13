@@ -1,0 +1,11 @@
+﻿name: Platform.Application CI
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    uses: Platform-System/Platform.CI-CD/.github/workflows/dotnet-build-template.yml@main
+    with:
+      project_path: 'Platform.Application/Platform.Application.csproj'
