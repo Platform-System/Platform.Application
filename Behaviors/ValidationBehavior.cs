@@ -1,6 +1,6 @@
 using FluentValidation;
 using MediatR;
-using Platform.SharedKernel.Responses;
+using Platform.BuildingBlocks.Responses;
 using System.Collections.Concurrent;
 using System.Reflection;
 

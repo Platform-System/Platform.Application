@@ -1,5 +1,5 @@
 using MediatR;
-using Platform.SharedKernel.Responses;
+using Platform.BuildingBlocks.Responses;
 
 namespace Platform.Application.Messaging
 {

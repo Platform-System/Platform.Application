@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Platform.Application.Behaviors;
 using System.Reflection;
 
-namespace Platform.Application.Extensions;
+namespace Platform.Application.DependencyInjection;
 
 public static class DependencyInjection
 {

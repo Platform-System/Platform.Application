@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Platform.Domain\Platform.Domain.csproj" />
     <ProjectReference Include="..\Platform.SharedKernel\Platform.SharedKernel.csproj" />
+    <ProjectReference Include="..\Platform.BuildingBlocks\Platform.BuildingBlocks.csproj" />
   </ItemGroup>
 
 </Project>

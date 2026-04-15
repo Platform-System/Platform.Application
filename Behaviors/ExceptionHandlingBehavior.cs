@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Platform.SharedKernel.Responses;
+using Platform.BuildingBlocks.Responses;
 using System.Collections.Concurrent;
 using System.Reflection;
 
