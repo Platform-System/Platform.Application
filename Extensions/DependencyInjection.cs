@@ -1,19 +1,28 @@
-using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 using Platform.Application.Behaviors;
+using System.Reflection;
 
 namespace Platform.Application.Extensions;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static IServiceCollection AddApplication(this IServiceCollection services, params Assembly[] additionalAssemblies)
     {
-        var assembly = typeof(DependencyInjection).Assembly;
+        // 1. Luôn lấy Assembly của chính nó (Dự án Application)
+        var allAssemblies = new List<Assembly> { typeof(DependencyInjection).Assembly };
 
+        // 2. Gộp thêm các Assembly truyền từ ngoài vào (Identity, Catalog...)
+        if (additionalAssemblies != null && additionalAssemblies.Length > 0)
+        {
+            allAssemblies.AddRange(additionalAssemblies);
+        }
+        var assembliesArray = allAssemblies.ToArray();
         services.AddMediatR(configuration =>
         {
-            configuration.RegisterServicesFromAssembly(assembly);
-            
+            // 3. Đăng ký một mẻ cho TẤT CẢ các Assembly
+            configuration.RegisterServicesFromAssemblies(assembliesArray);
+
             configuration.AddOpenBehavior(typeof(ExceptionHandlingBehavior<,>));
             configuration.AddOpenBehavior(typeof(LoggingBehavior<,>));
             configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
@@ -21,8 +30,11 @@ public static class DependencyInjection
             configuration.AddOpenBehavior(typeof(CacheBehavior<,>));
         });
 
-        services.AddValidatorsFromAssembly(assembly);
-
+        // 4. Quét luôn cả Validator (FluentValidation) cho tất cả các dự án
+        foreach (var assembly in assembliesArray)
+        {
+            services.AddValidatorsFromAssembly(assembly);
+        }
         return services;
     }
 }

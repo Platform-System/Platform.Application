@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Platform.Domain.Common;
+using MediatR;
+using Platform.SharedKernel.Responses;
 
 namespace Platform.Application.Messaging
 {

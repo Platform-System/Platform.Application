@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Platform.Domain.Common;
+using Platform.SharedKernel.Responses;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -11,7 +11,7 @@ namespace Platform.Application.Behaviors
     {
         private static readonly ConcurrentDictionary<Type, MethodInfo> _failureMethods = new();
         private readonly ILogger<ExceptionHandlingBehavior<TRequest, TResponse>> _logger;
-        
+
         public ExceptionHandlingBehavior(ILogger<ExceptionHandlingBehavior<TRequest, TResponse>> logger)
         {
             _logger = logger;
@@ -27,24 +27,19 @@ namespace Platform.Application.Behaviors
             {
                 _logger.LogError(ex, "Exception for {Request} {@Request}", typeof(TRequest).Name, request);
 
-                var domainError = new Error("System.Exception", "Internal server error");
                 var responseType = typeof(TResponse);
 
                 if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
                 {
                     var valueType = responseType.GetGenericArguments()[0];
                     var resultType = typeof(Result<>).MakeGenericType(valueType);
-                    
-                    var failureMethod = _failureMethods.GetOrAdd(resultType, type => 
+
+                    var failureMethod = _failureMethods.GetOrAdd(resultType, type =>
                         type.GetMethod(nameof(Result<object>.Failure), BindingFlags.Public | BindingFlags.Static)!);
 
-                    var result = failureMethod.Invoke(null, new object[] { domainError });
+                    // Truyền string vào params string[] của SharedKernel.Result
+                    var result = failureMethod.Invoke(null, new object[] { new string[] { "Internal server error" } });
                     return (TResponse)result!;
-                }
-
-                if (responseType == typeof(Result))
-                {
-                    return (TResponse)(object)Result.Failure(domainError);
                 }
 
                 throw;

@@ -1,6 +1,6 @@
 using FluentValidation;
 using MediatR;
-using Platform.Domain.Common;
+using Platform.SharedKernel.Responses;
 using System.Collections.Concurrent;
 using System.Reflection;
 
@@ -33,8 +33,7 @@ namespace Platform.Application.Behaviors
             if (validationFailures.Count != 0)
             {
                 var responseType = typeof(TResponse);
-                var firstError = validationFailures.First();
-                var domainError = new Error(firstError.PropertyName, firstError.ErrorMessage);
+                var errorMessages = validationFailures.Select(f => f.ErrorMessage).ToArray();
 
                 if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
                 {
@@ -44,16 +43,12 @@ namespace Platform.Application.Behaviors
                     var failureMethod = _failureMethods.GetOrAdd(resultType, type => 
                         type.GetMethod(nameof(Result<object>.Failure))!);
 
-                    var result = failureMethod.Invoke(null, new object[] { domainError });
+                    // Truyền toàn bộ danh sách lỗi vào SharedKernel.Result
+                    var result = failureMethod.Invoke(null, new object[] { errorMessages });
                     return (TResponse)result!;
                 }
-                
-                if (responseType == typeof(Result))
-                {
-                    return (TResponse)(object)Result.Failure(domainError);
-                }
 
-                throw new Exception("TResponse must be Result<T> or Result");
+                throw new Exception("TResponse must be Result<T>");
             }
 
             return await next();
