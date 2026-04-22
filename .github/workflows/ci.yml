@@ -1,4 +1,4 @@
-name: Platform.Application CI
+name: Application CI
 
 on:
   push:
