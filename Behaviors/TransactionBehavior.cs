@@ -18,7 +18,11 @@ namespace Platform.Application.Behaviors
 
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            if (_unitOfWork.HasActiveTransaction) return await next();
+            // Nếu là Query (lấy dữ liệu) hoặc đã có Transaction rồi thì bỏ qua, không mở thêm Transaction
+            if (request is not ICommand && !request.GetType().GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICommand<>)) || _unitOfWork.HasActiveTransaction)
+            {
+                return await next();
+            }
 
             await using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
