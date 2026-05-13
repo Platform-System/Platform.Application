@@ -35,7 +35,10 @@ namespace Platform.Application.Behaviors
                     var resultType = typeof(Result<>).MakeGenericType(valueType);
 
                     var failureMethod = _failureMethods.GetOrAdd(resultType, type =>
-                        type.GetMethod(nameof(Result<object>.Failure), BindingFlags.Public | BindingFlags.Static)!);
+                        type.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                            .First(m => m.Name == "Failure" && 
+                                        m.GetParameters().Length == 1 && 
+                                        m.GetParameters()[0].ParameterType == typeof(string[])));
 
                     // Truyền string vào params string[] của SharedKernel.Result
                     var result = failureMethod.Invoke(null, new object[] { new string[] { "Internal server error" } });
