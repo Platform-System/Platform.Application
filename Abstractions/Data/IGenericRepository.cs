@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Platform.BuildingBlocks.Responses;
 using Platform.Domain.Common;
 
 namespace Platform.Application.Abstractions.Data
@@ -8,7 +9,7 @@ namespace Platform.Application.Abstractions.Data
         Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includes);
         Task<List<T>> GetAllAsync(CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includes);
         Task<List<T>> GetAllAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default, params Expression<Func<T, object>>[] includes);
-        Task<(List<T> Items, int TotalCount)> GetPagedAsync(
+        Task<PagedResult<T>> GetPagedAsync(
             int page,
             int pageSize,
             Expression<Func<T, bool>>? filter = null,
