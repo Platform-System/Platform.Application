@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Platform.BuildingBlocks.Responses;
 using System.Collections.Concurrent;
@@ -36,12 +37,16 @@ namespace Platform.Application.Behaviors
 
                     var failureMethod = _failureMethods.GetOrAdd(resultType, type =>
                         type.GetMethods(BindingFlags.Public | BindingFlags.Static)
-                            .First(m => m.Name == "Failure" && 
-                                        m.GetParameters().Length == 1 && 
-                                        m.GetParameters()[0].ParameterType == typeof(string[])));
+                            .First(m => m.Name == "Failure" &&
+                                        m.GetParameters().Length == 2 &&
+                                        m.GetParameters()[0].ParameterType == typeof(int) &&
+                                        m.GetParameters()[1].ParameterType == typeof(string[])));
 
-                    // Truyền string vào params string[] của SharedKernel.Result
-                    var result = failureMethod.Invoke(null, new object[] { new string[] { "Internal server error" } });
+                    var result = failureMethod.Invoke(null, new object[]
+                    {
+                        StatusCodes.Status500InternalServerError,
+                        new string[] { "Internal server error" }
+                    });
                     return (TResponse)result!;
                 }
 
