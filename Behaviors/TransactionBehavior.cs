@@ -1,7 +1,9 @@
 using Platform.Application.Abstractions.Data;
 using Platform.Application.Messaging;
 using MediatR;
-
+using Microsoft.Extensions.Logging;
+using Platform.BuildingBlocks.Responses;
+ 
 namespace Platform.Application.Behaviors
 {
     public class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -9,11 +11,16 @@ namespace Platform.Application.Behaviors
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMediator _mediator;
+        private readonly ILogger<TransactionBehavior<TRequest, TResponse>> _logger;
 
-        public TransactionBehavior(IUnitOfWork unitOfWork, IMediator mediator)
+        public TransactionBehavior(
+            IUnitOfWork unitOfWork,
+            IMediator mediator,
+            ILogger<TransactionBehavior<TRequest, TResponse>> logger)
         {
             _unitOfWork = unitOfWork;
             _mediator = mediator;
+            _logger = logger;
         }
 
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
@@ -30,6 +37,12 @@ namespace Platform.Application.Behaviors
             {
                 var response = await next();
 
+                if (!ShouldCommitResponse(response))
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return response;
+                }
+
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
@@ -43,9 +56,9 @@ namespace Platform.Application.Behaviors
                         }
                         hasEvent.Events.Clear();
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) 
                     {
-                        Console.WriteLine($"--- Warning: Event/Redis failed: {ex.Message} ---");
+                        _logger.LogWarning(ex, "Post-commit event publishing failed for {RequestType}.", typeof(TRequest).Name);
                     }
                 }
 
@@ -59,6 +72,20 @@ namespace Platform.Application.Behaviors
                 }
                 throw; 
             }
+        }
+
+        private static bool ShouldCommitResponse(TResponse response)
+        {
+            if (response is null)
+                return true;
+
+            var responseType = response.GetType();
+            if (!responseType.IsGenericType || responseType.GetGenericTypeDefinition() != typeof(Result<>))
+                return true;
+
+            var isSuccessProperty = responseType.GetProperty(nameof(Result<Unit>.IsSuccess));
+            var isSuccessValue = isSuccessProperty?.GetValue(response);
+            return isSuccessValue is bool isSuccess ? isSuccess : true;
         }
     }
 }
