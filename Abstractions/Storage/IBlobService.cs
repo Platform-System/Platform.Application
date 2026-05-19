@@ -18,5 +18,5 @@ public interface IBlobService
 
     List<string> GenerateReadSasUrlsAsync(string container, IEnumerable<string> blobNames, int expireMinutes = 5);
 
-    Task<string> MakePublicAndGetUrl(string container, string blobName);
+    Task<string> MakePublicAndGetUrl(string container, string blobName, CancellationToken cancellationToken = default);
 }

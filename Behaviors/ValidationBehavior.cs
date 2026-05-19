@@ -23,9 +23,10 @@ namespace Platform.Application.Behaviors
                 return await next();
 
             var context = new ValidationContext<TRequest>(request);
+            var validationResults = await Task.WhenAll(
+                _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
 
-            var validationFailures = _validators
-                .Select(v => v.Validate(context))
+            var validationFailures = validationResults
                 .SelectMany(r => r.Errors)
                 .Where(e => e != null)
                 .ToList();
@@ -41,14 +42,20 @@ namespace Platform.Application.Behaviors
                     var resultType = typeof(Result<>).MakeGenericType(innerType);
                     
                     var failureMethod = _failureMethods.GetOrAdd(resultType, type => 
-                        type.GetMethod(nameof(Result<object>.Failure))!);
+                        type.GetMethod(
+                            nameof(Result<object>.Failure),
+                            BindingFlags.Public | BindingFlags.Static,
+                            binder: null,
+                            types: [typeof(string[])],
+                            modifiers: null)!);
 
                     // Truyền toàn bộ danh sách lỗi vào SharedKernel.Result
                     var result = failureMethod.Invoke(null, new object[] { errorMessages });
                     return (TResponse)result!;
                 }
 
-                throw new Exception("TResponse must be Result<T>");
+                throw new InvalidOperationException(
+                    $"ValidationBehavior requires {typeof(TResponse).Name} to be Result<T>.");
             }
 
             return await next();
