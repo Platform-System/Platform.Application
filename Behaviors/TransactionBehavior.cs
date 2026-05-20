@@ -48,18 +48,12 @@ namespace Platform.Application.Behaviors
 
                 if (request is IHasEvent hasEvent)
                 {
-                    try
+                    foreach (var @event in hasEvent.Events)
                     {
-                        foreach (var @event in hasEvent.Events)
-                        {
-                            await _mediator.Publish(@event, cancellationToken);
-                        }
-                        hasEvent.Events.Clear();
+                        await _mediator.Publish(@event, cancellationToken);
                     }
-                    catch (Exception ex) 
-                    {
-                        _logger.LogWarning(ex, "Post-commit event publishing failed for {RequestType}.", typeof(TRequest).Name);
-                    }
+
+                    hasEvent.Events.Clear();
                 }
 
                 return response;
