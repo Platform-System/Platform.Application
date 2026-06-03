@@ -43,17 +43,27 @@ namespace Platform.Application.Behaviors
                     return response;
                 }
 
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-
-                if (request is IHasEvent hasEvent)
+                if (request is IHasPreCommitEvent hasPreCommitEvent)
                 {
-                    foreach (var @event in hasEvent.Events)
+                    foreach (var @event in hasPreCommitEvent.PreCommitEvents)
                     {
                         await _mediator.Publish(@event, cancellationToken);
                     }
 
-                    hasEvent.Events.Clear();
+                    hasPreCommitEvent.PreCommitEvents.Clear();
+                }
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+
+                if (request is IHasPostCommitEvent hasPostCommitEvent)
+                {
+                    foreach (var @event in hasPostCommitEvent.PostCommitEvents)
+                    {
+                        await _mediator.Publish(@event, cancellationToken);
+                    }
+
+                    hasPostCommitEvent.PostCommitEvents.Clear();
                 }
 
                 return response;
